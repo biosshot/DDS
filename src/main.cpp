@@ -250,7 +250,8 @@ void setup()
     render_menu();
     parse_input();
   }
-
+ 
+  Serial.println("Uhh....");
   // sprite.pushSprite(0, 0);
 }
 
