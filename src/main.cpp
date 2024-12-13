@@ -258,3 +258,60 @@ void setup()
 void loop()
 {
 }
+
+// Эта мой код для вывода менюшки
+/*
+const char * options[] = {"Форма",
+  "Част.",
+  "Ампл.",
+  "Гарм.",
+  "Смещ.",
+  "Инфо"};
+
+void drawMenu() {
+  tft.fillScreen(TFT_BLACK);
+  
+  for (int i = 0; i < 6; i++) {
+    if (i == selectedOption) {
+      tft.setTextColor(TFT_GREENYELLOW);
+    } else {
+      tft.setTextColor(TFT_WHITE);
+    }
+    tft.setTextSize(0.5);
+    tft.setCursor(5, 22 + i * 35);
+    tft.fillRectHGradient(0, 19 + i * 35 - 1, 19, 19, TFT_BLACK, TFT_DARKCYAN);
+    tft.fillRectHGradient(19, 19 + i * 35 - 1, 20, 19, TFT_DARKCYAN, TFT_BLACK);
+    tft.drawSmoothRoundRect(0, 18 + i * 35, 1, 1, 40, 20, TFT_WHITE);
+    tft.println(options[i]);
+  }
+}
+void setup()
+{
+  Serial.begin(9600);
+
+  tft_init();
+
+  gpio_set_dir(8, 0);
+
+  for (int i = 0; i < BUFFER_SIZE; ++i)
+  {
+    sample_points_data[i] = (i % 2 == 0) ? 0 : 255;
+  }
+
+  dmaDataChan = dma_claim_unused_channel(true);
+  dmaCtrlChan = dma_claim_unused_channel(true);
+
+  sm = pio_claim_unused_sm(pio, true);
+
+  init_writer();
+
+  run_writer();
+
+ tft.setCursor(0, 0);
+ tft.setTextColor(TFT_RED, TFT_BLUE);
+ tft.setTextSize(2);
+ tft.drawString("Супер-пупер генератор!", 25, 110);
+ delay(2000);
+  // sprite.pushSprite(0, 0);
+}
+*/
