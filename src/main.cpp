@@ -18,6 +18,7 @@ Encoder encoder(28, 27, 0); // для работы c кнопкой
 #include <TFT_eSPI.h> // Graphics and font library
 #include <SPI.h>
 
+
 #define SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
@@ -31,6 +32,8 @@ int dmaDataChan;
 int dmaCtrlChan;
 PIO pio = pio0;
 int sm;
+
+int selectedOption = 0;
 
 enum
 {
@@ -47,22 +50,73 @@ struct menu_item
   uint8_t hold;
   uint8_t selected;
 };
-
-void render_item(menu_item *item)
+void render_form(menu_item *item)
 {
-  tft.println("TEXT 1");
-  // и другая отрисовка
+  if (item->hold == 0){
+    tft.setTextColor(TFT_YELLOW);
+  } else {
+    tft.setTextColor(TFT_WHITE);
+  }
+  tft.setTextSize (2);
+  tft.fillRectHGradient(0, 27, 50, 20, TFT_BLACK, TFT_DARKCYAN);
+  tft.fillRectHGradient(50, 27, 50, 20, TFT_DARKCYAN, TFT_BLACK);
+  tft.drawString("Форма", 22, 30);
 };
-
-void render_item_1(menu_item *item)
+void render_frequency(menu_item *item)
 {
-  tft.println("TEXT 2");
-  // и другая отрисовка
+  if (item->hold == 1){
+    tft.setTextColor(TFT_YELLOW);
+  } else {
+    tft.setTextColor(TFT_WHITE);
+  }
+  tft.setTextSize (2);
+  tft.fillRectHGradient(0, 67, 50, 20, TFT_BLACK, TFT_DARKCYAN);
+  tft.fillRectHGradient(50, 67, 50, 20, TFT_DARKCYAN, TFT_BLACK);
+  tft.drawString("Ампл.", 22, 70);
+};
+void render_amplitude(menu_item *item)
+{
+  if (item->hold == 2){
+    tft.setTextColor(TFT_YELLOW);
+  } else {
+    tft.setTextColor(TFT_WHITE);
+  }
+  tft.setTextSize (2);
+  tft.fillRectHGradient(0, 107, 50, 20, TFT_BLACK, TFT_DARKCYAN);
+  tft.fillRectHGradient(50, 107, 50, 20, TFT_DARKCYAN, TFT_BLACK);
+  tft.drawString("Част.", 22, 110);
+};
+void render_harmonic(menu_item *item)
+{
+  if (item->hold == 3){
+    tft.setTextColor(TFT_YELLOW);
+  } else {
+    tft.setTextColor(TFT_WHITE);
+  }
+  tft.setTextSize (2);
+  tft.fillRectHGradient(0, 147, 50, 20, TFT_BLACK, TFT_DARKCYAN);
+  tft.fillRectHGradient(50, 147, 50, 20, TFT_DARKCYAN, TFT_BLACK);
+  tft.drawString("Гарм.", 22, 150);
+};
+void render_offset(menu_item *item)
+{
+  if (item->hold == 4){
+    tft.setTextColor(TFT_YELLOW);
+  } else {
+    tft.setTextColor(TFT_WHITE);
+  }
+  tft.setTextSize (2);
+  tft.fillRectHGradient(0, 187, 50, 20, TFT_BLACK, TFT_DARKCYAN);
+  tft.fillRectHGradient(50, 187, 50, 20, TFT_DARKCYAN, TFT_BLACK);
+  tft.drawString("Смещ.", 22, 190);
 };
 
 menu_item menu_items[] = {
-    menu_item{0, 0, 100, 100, NULL, render_item},
-    menu_item{0, 100, 100, 100, NULL, render_item_1}
+    menu_item{0, 0, 100, 100, NULL, render_form},
+    menu_item{0, 60, 100, 100, NULL, render_frequency},
+    menu_item{0, 120, 100, 100, NULL, render_amplitude},
+    menu_item{0, 180, 100, 100, NULL, render_harmonic},
+    menu_item{0, 240, 100, 100, NULL, render_offset}
 
 };
 
@@ -138,9 +192,8 @@ void stop_writer()
 
 void tft_init()
 {
-
   tft.init();
-  tft.setRotation(1);
+  tft.setRotation(3);
   tft.fillScreen(TFT_BLACK);
 
   sprite.createSprite(TFT_WIDTH, TFT_HEIGHT);
@@ -244,74 +297,10 @@ void setup()
   init_writer();
 
   run_writer();
-
-  while (1)
-  {
-    render_menu();
-    parse_input();
-  }
- 
-  Serial.println("Uhh....");
-  // sprite.pushSprite(0, 0);
 }
 
 void loop()
 {
+  parse_input();
+  render_menu();
 }
-
-// Эта мой код для вывода менюшки
-/*
-const char * options[] = {"Форма",
-  "Част.",
-  "Ампл.",
-  "Гарм.",
-  "Смещ.",
-  "Инфо"};
-
-void drawMenu() {
-  tft.fillScreen(TFT_BLACK);
-  
-  for (int i = 0; i < 6; i++) {
-    if (i == selectedOption) {
-      tft.setTextColor(TFT_GREENYELLOW);
-    } else {
-      tft.setTextColor(TFT_WHITE);
-    }
-    tft.setTextSize(0.5);
-    tft.setCursor(5, 22 + i * 35);
-    tft.fillRectHGradient(0, 19 + i * 35 - 1, 19, 19, TFT_BLACK, TFT_DARKCYAN);
-    tft.fillRectHGradient(19, 19 + i * 35 - 1, 20, 19, TFT_DARKCYAN, TFT_BLACK);
-    tft.drawSmoothRoundRect(0, 18 + i * 35, 1, 1, 40, 20, TFT_WHITE);
-    tft.println(options[i]);
-  }
-}
-void setup()
-{
-  Serial.begin(9600);
-
-  tft_init();
-
-  gpio_set_dir(8, 0);
-
-  for (int i = 0; i < BUFFER_SIZE; ++i)
-  {
-    sample_points_data[i] = (i % 2 == 0) ? 0 : 255;
-  }
-
-  dmaDataChan = dma_claim_unused_channel(true);
-  dmaCtrlChan = dma_claim_unused_channel(true);
-
-  sm = pio_claim_unused_sm(pio, true);
-
-  init_writer();
-
-  run_writer();
-
- tft.setCursor(0, 0);
- tft.setTextColor(TFT_RED, TFT_BLUE);
- tft.setTextSize(2);
- tft.drawString("Супер-пупер генератор!", 25, 110);
- delay(2000);
-  // sprite.pushSprite(0, 0);
-}
-*/
