@@ -44,79 +44,31 @@ enum
 
 struct menu_item
 {
+  char text[24];
   uint16_t x, y, w, h;
   void (*function)(menu_item *, uint8_t);
   void (*render)(menu_item *);
   uint8_t hold;
   uint8_t selected;
 };
-void render_form(menu_item *item)
+void render_items(menu_item *item)
 {
-  if (item->hold == 0){
-    tft.setTextColor(TFT_YELLOW);
+  if (item->hold){
+    tft.setTextColor(TFT_RED);
   } else {
     tft.setTextColor(TFT_WHITE);
   }
   tft.setTextSize (2);
-  tft.fillRectHGradient(0, 27, 50, 20, TFT_BLACK, TFT_DARKCYAN);
-  tft.fillRectHGradient(50, 27, 50, 20, TFT_DARKCYAN, TFT_BLACK);
-  tft.drawString("Форма", 22, 30);
+  tft.fillRectHGradient(item->x - 22, item->y - 3, item->w / 2, item->h, TFT_BLACK, TFT_DARKCYAN);
+  tft.fillRectHGradient(item->x - 22 + (item->w / 2), item->y - 3, item->w / 2, item->h, TFT_DARKCYAN, TFT_BLACK);
+  tft.drawString(item->text, item->x,  item->y);
 };
-void render_frequency(menu_item *item)
-{
-  if (item->hold == 1){
-    tft.setTextColor(TFT_YELLOW);
-  } else {
-    tft.setTextColor(TFT_WHITE);
-  }
-  tft.setTextSize (2);
-  tft.fillRectHGradient(0, 67, 50, 20, TFT_BLACK, TFT_DARKCYAN);
-  tft.fillRectHGradient(50, 67, 50, 20, TFT_DARKCYAN, TFT_BLACK);
-  tft.drawString("Ампл.", 22, 70);
-};
-void render_amplitude(menu_item *item)
-{
-  if (item->hold == 2){
-    tft.setTextColor(TFT_YELLOW);
-  } else {
-    tft.setTextColor(TFT_WHITE);
-  }
-  tft.setTextSize (2);
-  tft.fillRectHGradient(0, 107, 50, 20, TFT_BLACK, TFT_DARKCYAN);
-  tft.fillRectHGradient(50, 107, 50, 20, TFT_DARKCYAN, TFT_BLACK);
-  tft.drawString("Част.", 22, 110);
-};
-void render_harmonic(menu_item *item)
-{
-  if (item->hold == 3){
-    tft.setTextColor(TFT_YELLOW);
-  } else {
-    tft.setTextColor(TFT_WHITE);
-  }
-  tft.setTextSize (2);
-  tft.fillRectHGradient(0, 147, 50, 20, TFT_BLACK, TFT_DARKCYAN);
-  tft.fillRectHGradient(50, 147, 50, 20, TFT_DARKCYAN, TFT_BLACK);
-  tft.drawString("Гарм.", 22, 150);
-};
-void render_offset(menu_item *item)
-{
-  if (item->hold == 4){
-    tft.setTextColor(TFT_YELLOW);
-  } else {
-    tft.setTextColor(TFT_WHITE);
-  }
-  tft.setTextSize (2);
-  tft.fillRectHGradient(0, 187, 50, 20, TFT_BLACK, TFT_DARKCYAN);
-  tft.fillRectHGradient(50, 187, 50, 20, TFT_DARKCYAN, TFT_BLACK);
-  tft.drawString("Смещ.", 22, 190);
-};
-
 menu_item menu_items[] = {
-    menu_item{0, 0, 100, 100, NULL, render_form},
-    menu_item{0, 60, 100, 100, NULL, render_frequency},
-    menu_item{0, 120, 100, 100, NULL, render_amplitude},
-    menu_item{0, 180, 100, 100, NULL, render_harmonic},
-    menu_item{0, 240, 100, 100, NULL, render_offset}
+    menu_item{"Форма", 22, 30, 100, 20, NULL, render_items},
+    menu_item{"Ампл.", 22, 70, 100, 20, NULL, render_items},
+    menu_item{"Част.", 22, 110, 100, 20, NULL, render_items},
+    menu_item{"Гарм.", 22, 150, 100, 20, NULL, render_items},
+    menu_item{"Смещ.", 22, 190, 100, 20, NULL, render_items}
 
 };
 
@@ -208,7 +160,6 @@ void render_menu()
     item->render(item);
   }
 }
-
 void parse_input()
 {
   encoder.tick();
@@ -216,11 +167,6 @@ void parse_input()
   static int16_t hold_menu_item = 0;
   menu_item *item = &menu_items[hold_menu_item];
   item->hold = 1;
-
-  if (!(encoder.isTurn() || encoder.isClick()))
-  {
-    return;
-  }
 
   if (encoder.isLeft())
   {
