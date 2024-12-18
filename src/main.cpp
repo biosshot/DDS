@@ -21,6 +21,7 @@ Encoder encoder(28, 27, 0); // для работы c кнопкой
 
 #define SIZE(x) (sizeof(x) / sizeof(x[0]))
 
+
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
 
 TFT_eSprite sprite = TFT_eSprite(&tft);
@@ -34,6 +35,7 @@ PIO pio = pio0;
 int sm;
 
 int selectedOption = 0;
+static int16_t hold_menu_item = 0;
 
 enum
 {
@@ -54,21 +56,21 @@ struct menu_item
 void render_items(menu_item *item)
 {
   if (item->hold){
-    tft.setTextColor(TFT_YELLOW);
+    sprite.setTextColor(TFT_RED);
   } else {
-    tft.setTextColor(TFT_WHITE);
+    sprite.setTextColor(TFT_WHITE);
   }
-  tft.setTextSize (2);
-  tft.fillRectHGradient(item->x - 22, item->y - 3, item->w / 2, item->h, TFT_BLACK, TFT_DARKCYAN);
-  tft.fillRectHGradient(item->x - 22 + (item->w / 2), item->y - 3, item->w / 2, item->h, TFT_DARKCYAN, TFT_BLACK);
-  tft.drawString(item->text, item->x,  item->y);
+  sprite.setTextSize (2);
+  sprite.fillRectHGradient(item->x - 22, item->y - 3, item->w / 2, item->h, TFT_BLACK, TFT_DARKCYAN);
+  sprite.fillRectHGradient(item->x - 22 + (item->w / 2), item->y - 3, item->w / 2, item->h, TFT_DARKCYAN, TFT_BLACK);
+  sprite.drawString(item->text, item->x,  item->y);
 };
 menu_item menu_items[] = {
-    menu_item{"Форма", 22, 30, 100, 20, NULL, render_items},
-    menu_item{"Ампл.", 22, 70, 100, 20, NULL, render_items},
-    menu_item{"Част.", 22, 110, 100, 20, NULL, render_items},
-    menu_item{"Гарм.", 22, 150, 100, 20, NULL, render_items},
-    menu_item{"Смещ.", 22, 190, 100, 20, NULL, render_items}
+    menu_item{"Form", 22, 30, 100, 20, NULL, render_items},
+    menu_item{"Ampl", 22, 70, 100, 20, NULL, render_items},
+    menu_item{"Freq", 22, 110, 100, 20, NULL, render_items},
+    menu_item{"Harm", 22, 150, 100, 20, NULL, render_items},
+    menu_item{"Offset", 22, 190, 100, 20, NULL, render_items}
 
 };
 void init_writer()
@@ -158,6 +160,7 @@ void render_menu()
     menu_item *item = &menu_items[i];
     item->render(item);
   }
+  sprite.pushSprite(0, 0);
 }
 void parse_input()
 {
@@ -166,9 +169,22 @@ void parse_input()
   static int16_t hold_menu_item = 0;
   menu_item *item = &menu_items[hold_menu_item];
   item->hold = 1;
-
+/*
+  if (!(encoder.isTurn() || encoder.isClick()))
+  {
+    return;
+  }
+*/
   if (encoder.isLeft())
   {
+    Serial.print("Levo\n");
+    if (item->selected)
+    {
+      if (item->function)
+        item->function(item, MA_LEFT);
+    }
+    else
+    {
       item->hold = 0;
 
       hold_menu_item = hold_menu_item - 1;
@@ -177,9 +193,18 @@ void parse_input()
       {
         hold_menu_item = SIZE(menu_items) - 1;
       }
+    }
   }
   else if (encoder.isRight())
   {
+    Serial.print("Pravo\n");
+    if (item->selected)
+    {
+      if (item->function)
+        item->function(item, MA_RIGHT);
+    }
+    else
+    {
       item->hold = 0;
 
       hold_menu_item = hold_menu_item + 1;
@@ -188,6 +213,7 @@ void parse_input()
       {
         hold_menu_item = 0;
       }
+    }
   }
   /*else if (encoder.isClick())
   {
@@ -201,10 +227,14 @@ void parse_input()
         item->function(item, MA_BTN);
     }
   }*/
-
+}
+void encoder_tick()
+{
+  encoder.tick();
 }
 void setup()
 {
+  attachInterrupt(28, encoder_tick, CHANGE);
   Serial.begin(9600);
 
   tft_init();
@@ -226,10 +256,11 @@ void setup()
   init_writer();
 
   run_writer();
+
+  sprite.createSprite(320, 240);
 }
 
 void loop()
 {
   parse_input();
-  render_menu();
 }
