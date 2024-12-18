@@ -9,6 +9,7 @@
 Encoder encoder(28, 27, 0); // для работы c кнопкой
 // int value = 0;
 #include <stdio.h>
+#include "pico/time.h"
 
 #include "hardware/dma.h"
 #include "hardware/pio.h"
@@ -35,7 +36,6 @@ PIO pio = pio0;
 int sm;
 
 int selectedOption = 0;
-static int16_t hold_menu_item = 0;
 
 enum
 {
@@ -43,6 +43,8 @@ enum
   MA_RIGHT,
   MA_BTN
 };
+bool __not_in_flash_func(timer)(struct repeating_timer *t)
+{ encoder.tick(); }
 
 struct menu_item
 {
@@ -164,8 +166,6 @@ void render_menu()
 }
 void parse_input()
 {
-  encoder.tick();
-
   static int16_t hold_menu_item = 0;
   menu_item *item = &menu_items[hold_menu_item];
   item->hold = 1;
@@ -235,7 +235,8 @@ void encoder_tick()
 void setup()
 {
   attachInterrupt(28, encoder_tick, CHANGE);
-  Serial.begin(9600);
+  static struct repeating_timer timer;
+  add_repeating_timer_ms(5, timer, NULL, &timer);
 
   tft_init();
 
@@ -263,4 +264,5 @@ void setup()
 void loop()
 {
   parse_input();
+  render_menu();
 }
