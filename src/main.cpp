@@ -54,7 +54,7 @@ struct menu_item
 void render_items(menu_item *item)
 {
   if (item->hold){
-    tft.setTextColor(TFT_RED);
+    tft.setTextColor(TFT_YELLOW);
   } else {
     tft.setTextColor(TFT_WHITE);
   }
@@ -71,7 +71,6 @@ menu_item menu_items[] = {
     menu_item{"Смещ.", 22, 190, 100, 20, NULL, render_items}
 
 };
-
 void init_writer()
 {
   dma_channel_config ctrlChanConfig = dma_channel_get_default_config(dmaCtrlChan);
@@ -170,13 +169,6 @@ void parse_input()
 
   if (encoder.isLeft())
   {
-    if (item->selected)
-    {
-      if (item->function)
-        item->function(item, MA_LEFT);
-    }
-    else
-    {
       item->hold = 0;
 
       hold_menu_item = hold_menu_item - 1;
@@ -185,17 +177,9 @@ void parse_input()
       {
         hold_menu_item = SIZE(menu_items) - 1;
       }
-    }
   }
   else if (encoder.isRight())
   {
-    if (item->selected)
-    {
-      if (item->function)
-        item->function(item, MA_RIGHT);
-    }
-    else
-    {
       item->hold = 0;
 
       hold_menu_item = hold_menu_item + 1;
@@ -204,9 +188,8 @@ void parse_input()
       {
         hold_menu_item = 0;
       }
-    }
   }
-  else if (encoder.isClick())
+  /*else if (encoder.isClick())
   {
     if (encoder.isDouble())
     {
@@ -217,9 +200,9 @@ void parse_input()
       if (item->function)
         item->function(item, MA_BTN);
     }
-  }
-}
+  }*/
 
+}
 void setup()
 {
   Serial.begin(9600);
