@@ -9,7 +9,6 @@
 Encoder encoder(28, 27, 0); // для работы c кнопкой
 // int value = 0;
 #include <stdio.h>
-#include "pico/time.h"
 
 #include "hardware/dma.h"
 #include "hardware/pio.h"
@@ -18,6 +17,7 @@ Encoder encoder(28, 27, 0); // для работы c кнопкой
 
 #include <TFT_eSPI.h> // Graphics and font library
 #include <SPI.h>
+
 
 #define SIZE(x) (sizeof(x) / sizeof(x[0]))
 
@@ -33,20 +33,14 @@ int dmaCtrlChan;
 PIO pio = pio0;
 int sm;
 
-int selectedOption = 0;
-
 enum
 {
   MA_LEFT,
   MA_RIGHT,
   MA_BTN
 };
-
-bool __not_in_flash_func(timer_cb)(struct repeating_timer *t)
-{
-  encoder.tick();
-  return true;
-}
+bool __not_in_flash_func(timer)(struct repeating_timer *t)
+{ encoder.tick(); }
 
 struct menu_item
 {
@@ -75,14 +69,12 @@ void render_items(menu_item *item)
 };
 
 menu_item menu_items[] = {
-    menu_item{"Form", 22, 30, 100, 20, NULL, render_items},
-    menu_item{"Ampl", 22, 70, 100, 20, NULL, render_items},
-    menu_item{"Freq", 22, 110, 100, 20, NULL, render_items},
-    menu_item{"Harm", 22, 150, 100, 20, NULL, render_items},
-    menu_item{"Offset", 22, 190, 100, 20, NULL, render_items}
-
+    menu_item{"Form", 22, 30, 110, 20, NULL, render_items},
+    menu_item{"Ampl", 22, 70, 110, 20, NULL, render_items},
+    menu_item{"Freq", 22, 110, 110, 20, NULL, render_items},
+    menu_item{"Harm", 22, 150, 110, 20, NULL, render_items},
+    menu_item{"Offset", 22, 190, 110, 20, NULL, render_items}
 };
-
 void init_writer()
 {
   dma_channel_config ctrlChanConfig = dma_channel_get_default_config(dmaCtrlChan);
@@ -262,7 +254,7 @@ void setup()
   init_writer();
 
   run_writer();
-
+  
   sprite.createSprite(320, 240);
 }
 
