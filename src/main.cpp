@@ -19,9 +19,7 @@ Encoder encoder(28, 27, 0); // для работы c кнопкой
 #include <TFT_eSPI.h> // Graphics and font library
 #include <SPI.h>
 
-
 #define SIZE(x) (sizeof(x) / sizeof(x[0]))
-
 
 TFT_eSPI tft = TFT_eSPI(); // Invoke library, pins defined in User_Setup.h
 
@@ -43,8 +41,12 @@ enum
   MA_RIGHT,
   MA_BTN
 };
-bool __not_in_flash_func(timer)(struct repeating_timer *t)
-{ encoder.tick(); }
+
+bool __not_in_flash_func(timer_cb)(struct repeating_timer *t)
+{
+  encoder.tick();
+  return true;
+}
 
 struct menu_item
 {
@@ -55,18 +57,23 @@ struct menu_item
   uint8_t hold;
   uint8_t selected;
 };
+
 void render_items(menu_item *item)
 {
-  if (item->hold){
+  if (item->hold)
+  {
     sprite.setTextColor(TFT_RED);
-  } else {
+  }
+  else
+  {
     sprite.setTextColor(TFT_WHITE);
   }
-  sprite.setTextSize (2);
+  sprite.setTextSize(2);
   sprite.fillRectHGradient(item->x - 22, item->y - 3, item->w / 2, item->h, TFT_BLACK, TFT_DARKCYAN);
   sprite.fillRectHGradient(item->x - 22 + (item->w / 2), item->y - 3, item->w / 2, item->h, TFT_DARKCYAN, TFT_BLACK);
-  sprite.drawString(item->text, item->x,  item->y);
+  sprite.drawString(item->text, item->x, item->y);
 };
+
 menu_item menu_items[] = {
     menu_item{"Form", 22, 30, 100, 20, NULL, render_items},
     menu_item{"Ampl", 22, 70, 100, 20, NULL, render_items},
@@ -75,6 +82,7 @@ menu_item menu_items[] = {
     menu_item{"Offset", 22, 190, 100, 20, NULL, render_items}
 
 };
+
 void init_writer()
 {
   dma_channel_config ctrlChanConfig = dma_channel_get_default_config(dmaCtrlChan);
@@ -164,17 +172,18 @@ void render_menu()
   }
   sprite.pushSprite(0, 0);
 }
+
 void parse_input()
 {
   static int16_t hold_menu_item = 0;
   menu_item *item = &menu_items[hold_menu_item];
   item->hold = 1;
-/*
-  if (!(encoder.isTurn() || encoder.isClick()))
-  {
-    return;
-  }
-*/
+  /*
+    if (!(encoder.isTurn() || encoder.isClick()))
+    {
+      return;
+    }
+  */
   if (encoder.isLeft())
   {
     Serial.print("Levo\n");
@@ -228,15 +237,11 @@ void parse_input()
     }
   }*/
 }
-void encoder_tick()
-{
-  encoder.tick();
-}
+
 void setup()
 {
-  attachInterrupt(28, encoder_tick, CHANGE);
   static struct repeating_timer timer;
-  add_repeating_timer_ms(5, timer, NULL, &timer);
+  add_repeating_timer_ms(5, timer_cb, NULL, &timer);
 
   tft_init();
 
