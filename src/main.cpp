@@ -62,7 +62,6 @@ void generate_waveform(uint8_t buffer[BUFFER_SIZE], int waveform_type, double am
   std::vector<double> values(BUFFER_SIZE, 0.0);
   for (int i = 0; i < BUFFER_SIZE; i++) {
     float value{};
-      //чиста сигнал
       switch (waveform_type) {
       case 0: // sin
         value = std::sin(2.0 * PI * i / BUFFER_SIZE);
@@ -78,13 +77,14 @@ void generate_waveform(uint8_t buffer[BUFFER_SIZE], int waveform_type, double am
         break;
       case 4: // Reverse Saw
         value = ((1.0 - static_cast<double>(i) / (BUFFER_SIZE - 1)) * 2) - 1;
+        break;
       default:
-         // Best Form
+        value = 0.0;
         break;
       }
       if (harmonics > 0) {
         for (int h = 1; h <= harmonics; h++) {
-          double g = (1.0 / h) * std::sin(2.0 * PI * h * i / BUFFER_SIZE);
+          double g = (1.0 / h) * std::sin(2.0 * PI * h * static_cast<double>(i) / BUFFER_SIZE);
           value += g;
         }
       }
@@ -92,15 +92,16 @@ void generate_waveform(uint8_t buffer[BUFFER_SIZE], int waveform_type, double am
     }
   double max = *std::max_element(values.begin(), values.end());
   double min = *std::min_element(values.begin(), values.end());
-  double amp = std::abs(max) + std::abs(min);
+  double range = max - min;
   for (int i = 0; i < values.size(); i++) {
-      buffer[i] = static_cast<uint8_t>((((values[i] + (amp / 2)) / amp) * amplitude));
+      buffer[i] = static_cast<uint8_t>(((values[i] - min) / range) * 120.0);
     }
 }
+
 void render_items(menu_item *item,  char* value, char* unit)
 {
   if (item->hold){
-    sprite.setTextColor(TFT_RED);
+    sprite.setTextColor(TFT_YELLOW);
     sprite.drawLine(item->w + 7, item->y - 7, item->w + 120, item->y - 7, TFT_DARKCYAN);
     sprite.drawLine(item->w + 7, item->y + item->h + 2, item->w + 120, item->y + item->h + 2, TFT_DARKCYAN);
   } else {
@@ -168,6 +169,7 @@ void render_Harm(menu_item *item)
   
 }
 void render_Offset(menu_item *item)
+
 {
   char offset[32] = { 0 };
   itoa(Offset, offset, 10);
@@ -175,18 +177,17 @@ void render_Offset(menu_item *item)
   render_items(item, offset, unit);
   
 }
-
 void render_Graph(menu_item *item)
 {
   sprite.drawRect(item->x, item->y, item->w, item->h, TFT_DARKCYAN);
+  sprite.drawLine(item->x, item->y + item->h / 2, item->x + item->w, item->y + item->h / 2, TFT_DARKCYAN);
   generate_waveform(sample_points_data, Form, Amplitude, Harmonic);
-  for (int i = 0, j = 0; i < 255; i++, j += 16) {
-    int xo = item->x + i;
-    int yo = item->y + item->h  - sample_points_data[j]/3;
-    int x = item->x + i+1;
-    int y = item->y + item->h - sample_points_data[j+16]/3;
-    if (x >= item-> x + item->w){ i = 255;}
-    sprite.drawLine(xo, yo, x, y, TFT_DARKCYAN);
+  for (int i = 0; i < BUFFER_SIZE - 1; i++) {
+    int xo = item->x + ((static_cast<double>(i) / (BUFFER_SIZE - 1)) * item->w);
+    int x  = item->x + ((static_cast<double>(i+1) / (BUFFER_SIZE - 1)) * item->w);
+    int yo = item->y + item->h - static_cast<int>(sample_points_data[i]);
+    int y = item->y + item->h - static_cast<int>(sample_points_data[i + 1]);
+    sprite.drawLine(xo, yo, x, y, TFT_CYAN);
   }
 }
 
@@ -198,7 +199,6 @@ menu_item menu_items[] = {
     menu_item{"\tOffset", 11, 190, 55, 14, NULL, render_Offset},
     menu_item{"\tGraph", 190, 25, 120, 120, NULL, render_Graph}
 };
-
 
 void init_writer()
 {
@@ -273,7 +273,7 @@ void stop_writer()
 void tft_init()
 {
   tft.init();
-  tft.setRotation(3);
+  tft.setRotation(1);
   tft.fillScreen(TFT_BLACK);
   sprite.setTextSize (1);
 
@@ -291,85 +291,89 @@ void render_menu()
   sprite.pushSprite(0, 0);
 }
 
+static int16_t hold_menu_item = 0;
+
+void execute_menu_function(menu_item *item, int action)
+{
+    if (item->selected && item->function)
+    {
+        item->function(item, action);
+    }
+    else
+    {
+        item->hold = 0;
+    }
+}
+void update_hold_menu_item(int direction)
+{
+    hold_menu_item += direction;
+    hold_menu_item = (hold_menu_item + SIZE(menu_items)) % SIZE(menu_items);
+}
+void encoder_turn(menu_item *item)
+{
+    if (encoder.isLeft())
+    {
+        Serial.println("Left\n");
+        execute_menu_function(item, MA_LEFT);
+        update_hold_menu_item(-1);
+    }
+    else if (encoder.isRight())
+    {
+        Serial.println("Right\n");
+        execute_menu_function(item, MA_RIGHT);
+        update_hold_menu_item(1);
+    }
+}
 void parse_input()
 {
-  static int16_t hold_menu_item = 0;
-  menu_item *item = &menu_items[hold_menu_item];
-  item->hold = 1;
-/*
-  if (!(encoder.isTurn() || encoder.isClick()))
-  {
-    return;
-  }
-*/
-  if (encoder.isLeft())
-  {
-    Serial.print("Levo\n");
-    if (item->selected)
-    {
-      if (item->function)
-        item->function(item, MA_LEFT);
-    }
-    else
-    {
-      item->hold = 0;
+    menu_item *item = &menu_items[hold_menu_item];
+    item->hold = 1;
 
-      hold_menu_item = hold_menu_item - 1;
-
-      if (hold_menu_item < 0)
-      {
-        hold_menu_item = SIZE(menu_items) - 1;
-      }
-    }
-  }
-  else if (encoder.isRight())
-  {
-    Serial.print("Pravo\n");
-    if (item->selected)
+    if (!(encoder.isTurn() || encoder.isClick()))
     {
-      if (item->function)
-        item->function(item, MA_RIGHT);
+        return;
     }
-    else
+
+    if (encoder.isLeft() || encoder.isRight())
     {
-      item->hold = 0;
-
-      hold_menu_item = hold_menu_item + 1;
-
-      if (hold_menu_item >= SIZE(menu_items))
-      {
-        hold_menu_item = 0;
-      }
+        Serial.println("povorot\n");
+        encoder_turn(item);
     }
-  }
-  /*else if (encoder.isClick())
-  {
+
     if (encoder.isDouble())
     {
-      item->selected = !item->selected;
+        item->selected = !item->selected;
     }
     else
     {
-      if (item->function)
-        item->function(item, MA_BTN);
+        if (item->function)
+            item->function(item, MA_BTN);
     }
-  }*/
 }
 
 bool __not_in_flash_func(timer_cb)(struct repeating_timer *t)
-{ encoder.tick(); return true;
+{ encoder.tick();
   parse_input();
+  return true;
 }
 
 
 void setup()
 {
   Form = Sin;
-  Amplitude = 1000; Frequncy = 1000;
-  static struct repeating_timer timer;
-  add_repeating_timer_ms(5, timer_cb, NULL, &timer);
+  Amplitude = 2000; Frequncy = 100;
+  
   tft_init();
   gpio_set_dir(8, 0);
+
+  while(1)
+  { 
+    encoder.tick(); 
+    if (encoder.isLeft())
+    {
+    Serial.print("Levo\n");
+    }
+  }
 
   encoder.setType(TYPE2);
 
@@ -382,9 +386,14 @@ void setup()
 
   run_writer();
 
+  static struct repeating_timer timer;
+  add_repeating_timer_ms(5, timer_cb, NULL, &timer);
+
 }
 
 void loop()
 {
   render_menu();
+  
+  delay(100);
 }
