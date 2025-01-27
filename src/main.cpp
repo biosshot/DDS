@@ -21,7 +21,7 @@
 
 #define SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define MAX_BUFFER_SIZE 4000
-#define PREVIEW_BUFFER_SIZE 512
+#define PREVIEW_BUFFER_SIZE 256
 #define R2R_TOP_VOLTAGE_MV 3300
 #define FREQ_DIGITS 7
 #define MAX_FREQ 2'500'000
@@ -59,7 +59,7 @@ enum
 struct
 {
   int8_t form = SIN;
-  uint32_t frequncy = 1'000'000;
+  uint32_t frequncy = 1'000;
   uint16_t harmonic = 0;
   int16_t offset = 0;
   int16_t amplitude = 2000;
@@ -104,7 +104,7 @@ struct
 {
   float div;
   uint8_t ch;
-} divs[] = {{10, 2}, {5, 1}, {2, 0}, {1, 3}};
+} divs[] = {{9.74, 2}, {4.87, 1}, {1.98, 0}, {1, 3}};
 
 void generate_waveform(uint8_t *buffer, bool is_output = false)
 {
@@ -208,7 +208,7 @@ void set_ampl(uint16_t out_ampl)
 {
   signal.amplitude = out_ampl;
 
-  float ampl = out_ampl / 5.f;
+  float ampl = (out_ampl / 2.f) * 1.33;
   float dist = MAXFLOAT;
   uint8_t best_div = 0;
 
@@ -413,8 +413,9 @@ void freq_item_action(menu_item *item, uint8_t action)
 void harm_item_action(menu_item *item, uint8_t action)
 {
   signal.harmonic += action == MA_LEFT ? 1 : -1;
-  signal.harmonic = min(24, max(signal.harmonic, 0));
-  generate_waveform(sample_points_data);
+  signal.harmonic = min(8, max(signal.harmonic, 0));
+
+  update_waveform();
 }
 
 void offest_item_action(menu_item *item, uint8_t action)
@@ -502,7 +503,7 @@ void stop_writer()
 
   dma_channel_cleanup(dmaCtrlChan);
   dma_channel_cleanup(dmaDataChan);
-  
+
   pio_sm_set_enabled(pio, sm, false);
 }
 
@@ -626,9 +627,9 @@ void set_offset(int16_t offset_mv)
 
   gpio_set_function(pwm_offset_pin, GPIO_FUNC_PWM);
 
-  uint8_t duty = (1.f / 33.f * (float(offset_mv) / 1000.f) + 0.5) * 100.f;
+  double duty = ((1.f / (6600.f)) * (offset_mv - 25) + 0.5) * 100.f;
 
-  pwm_calc_result par = calc_pwm(200'000, duty);
+  pwm_calc_result par = calc_pwm(100'000, duty);
 
   uint slice = pwm_gpio_to_slice_num(pwm_offset_pin);
   pwm_set_clkdiv_mode(slice, PWM_DIV_FREE_RUNNING);
