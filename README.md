@@ -58,7 +58,7 @@
 
 ---
 
-### 1. Найстройка TFT_eSPI
+### 1. Настройка TFT_eSPI
 
 **ОБЯЗАТЕЛЬНО** замените .pio\libdeps\pico\TFT_eSPI\User_Setup.h на include\User_Setup.h
 
