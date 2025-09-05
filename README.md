@@ -3,6 +3,9 @@
 ![Main](https://i.imgur.com/fb66fZL.png)  
 *Функциональный генератор сигналов с управлением через энкодер и дисплей, построенный на микроконтроллере Raspberry Pi RP2040-Zero.*
 
+[![EasyEDA Проект](https://img.shields.io/badge/EasyEDA-Проект-0077B6?logo=EasyEDA)](https://oshwlab.com/super_loxi/dds)
+[![GitHub Репозиторий](https://img.shields.io/badge/GitHub-Репозиторий-181717?logo=github)](https://github.com/biosshot/DDS)
+
 ---
 
 ## 🔧 Описание проекта
