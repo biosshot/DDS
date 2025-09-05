@@ -22,9 +22,9 @@
 #define SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define MAX_BUFFER_SIZE 4000
 #define PREVIEW_BUFFER_SIZE 256
-#define R2R_TOP_VOLTAGE_MV 3300
-#define FREQ_DIGITS 7
-#define MAX_FREQ 2'500'000
+#define R2R_TOP_VOLTAGE_MV 2800
+#define FREQ_DIGITS 8
+#define MAX_FREQ 15'000'000
 
 HC4051D hc4051{9, 29, 10};
 
@@ -374,7 +374,7 @@ void form_item_action(menu_item *item, uint8_t action)
 
 void ampl_item_action(menu_item *item, uint8_t action)
 {
-  signal.amplitude += action == MA_LEFT ? 100 : -100;
+  signal.amplitude += action == MA_LEFT ? 50 : -50;
   signal.amplitude = min(5000, max(signal.amplitude, 0));
 
   set_ampl(signal.amplitude);
@@ -420,8 +420,8 @@ void harm_item_action(menu_item *item, uint8_t action)
 
 void offest_item_action(menu_item *item, uint8_t action)
 {
-  signal.offset += action == MA_LEFT ? 100 : -100;
-  signal.offset = min(3000, max(signal.offset, -3000));
+  signal.offset += action == MA_LEFT ? 50 : -50;
+  signal.offset = min(5000, max(signal.offset, -5000));
   // generate_waveform(sample_points_data);
   set_offset(signal.offset);
 }
